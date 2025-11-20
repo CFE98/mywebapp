@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reifenservice Eichlberger</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f3f8; padding: 20px; }
+  .container { max-width: 950px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+  h1 { text-align: center; font-size: 28px; color: #2c3e50; margin-bottom: 25px; font-weight: 700; }
+  label { font-weight: 600; color: #34495e; min-width: 150px; }
+  .row { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; align-items: center; }
+  select, input[type='number'], input[type='text'], input[type='date'] { flex: 1; padding: 10px 12px; border-radius: 15px; border: 1px solid #d1d8e0; font-size: 14px; background: #f8f9fc; }
+  select:disabled, input:disabled { background: #e0e0e0; }
+  .service-box { display: flex; gap: 10px; flex-wrap: wrap; }
+  .service-box label { flex: 1; background: #f1f4f9; padding: 10px; border-radius: 15px; display: flex; align-items: center; cursor: pointer; transition: background 0.2s; text-align: left; min-height: 50px; }
+  .service-box label:hover { background: #e4ebf5; }
+  .service-box input[type=checkbox] { margin-right: 10px; }
+  .triple-select { display: flex; gap: 10px; flex: 1; }
+  .triple-select select { flex: 1; }
+  .result-row { display: flex; gap: 10px; align-items: stretch; }
+  .result-box, .offer-box, .profit-box { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-radius: 15px; font-size: 20px; font-weight: 700; min-height: 50px; }
+  .result-box { background: #e0f7fa; border-left: 5px solid #00acc1; }
+  .offer-box { background: #ffd699; border-left: 5px solid #ff9900; }
+  .offer-box input { border: none; font-size: 20px; font-weight: 700; width: 150px; text-align: center; background-color: transparent; }
+  .profit-box { background: #dff2e0; border-left: 5px solid #00b050; color: #007c20; }
+  .bearbeiter-box { display: flex; gap: 10px; width: 100%; }
+  .bearbeiter-box select, .bearbeiter-box input[type=date] { flex: 1; padding: 10px 12px; border-radius: 15px; border: 1px solid #d1d8e0; font-size: 14px; background: #f8f9fc; }
+  .pdf-button { margin-top: 20px; padding: 12px 25px; border-radius: 15px; border: none; background-color: #007c91; color: #fff; font-size: 16px; cursor: pointer; }
+  .pdf-button:hover { background-color: #005f6a; }
+  .disabled-row { opacity: 0.5; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Reifenservice Eichlberger</h1>
+
+  <!-- Kunde, Auto, Stückzahl, Felgen, Reifenart -->
+  <div class="row">
+    <label>Kunde (Vorname, Nachname):</label>
+    <input type="text" id="kunde" placeholder="Max Mustermann">
+    <label>Auto:</label>
+    <input type="text" id="auto" placeholder="VW Golf">
+    <label>Stückzahl der Reifen:</label>
+    <input type="number" id="qty" min="1" value="1">
+    <select id="felgentyp">
+      <option value="">Felgentyp</option>
+      <option>Alu</option>
+      <option>Stahl</option>
+    </select>
+    <select id="reifen_art">
+      <option value="">Reifenart</option>
+      <option>Sommerreifen</option>
+      <option>Winterreifen</option>
+    </select>
+  </div>
+
+  <!-- Dienstleistungen -->
+  <div class="row service-box">
+    <label><input type="checkbox" id="demontage" /> Demontage am Auto (1,5€)</label>
+    <label><input type="checkbox" id="aufziehen" /> Abziehen & Neu Aufziehen (4€)</label>
+    <label><input type="checkbox" id="wuchten" /> Wuchten (2€)</label>
+    <label><input type="checkbox" id="montieren" /> Montieren am Auto (2,5€)</label>
+    <label><input type="checkbox" id="entsorgen" /> Entsorgen (4€)</label>
+  </div>
+
+  <!-- Reifen -->
+  <div class="row">
+    <label>Reifen</label>
+    <select id="reifen_option">
+      <option value="beigestellt">Beigestellt</option>
+      <option value="bestellen">Bestellen</option>
+    </select>
+    <input type="number" id="reifenpreis" placeholder="Reifen pro Stk." step="0.01" min="0">
+  </div>
+
+  <!-- Dimension & Marke -->
+  <div class="row" id="dimRow">
+    <label>Reifendimension & Marke:</label>
+    <select id="dim_breite"><option value="">Breite</option></select>
+    <select id="dim_hoehe"><option value="">Höhe</option></select>
+    <select id="dim_zoll"><option value="">Zoll</option></select>
+    <select id="reifen_marke">
+      <option value="">Reifenmarke</option>
+      <option>Michelin</option><option>Continental</option><option>Bridgestone</option>
+      <option>Pirelli</option><option>Goodyear</option><option>Hankook</option>
+      <option>Dunlop</option><option>Vredestein</option>
+    </select>
+  </div>
+
+  <!-- Index -->
+  <div class="row" id="indexRow">
+    <label>Tragfähigkeitsindex, XL & Geschwindigkeitsindex:</label>
+    <div class="triple-select">
+      <select id="load_index"><option value="">Load Index (kg)</option></select>
+      <select id="xl_reinforced">
+        <option value="">Normal / XL</option>
+        <option>Normal</option>
+        <option>XL (Extra Load)</option>
+      </select>
+      <select id="speed_index">
+        <option value="">Speed Index (km/h)</option>
+        <option>Q (160 km/h)</option><option>R (170 km/h)</option><option>S (180 km/h)</option>
+        <option>T (190 km/h)</option><option>H (210 km/h)</option><option>V (240 km/h)</option>
+        <option>W (270 km/h)</option><option>Y (300 km/h)</option><option>ZR (>240 km/h)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Kalkulation -->
+  <div class="row result-row">
+    <div class="result-box">Kalkulationspreis: <strong id="result">0,00€</strong></div>
+    <div class="offer-box">Angebotspreis: <input type="number" id="angebotspreis" placeholder="€" step="0.01" min="0"></div>
+    <div class="profit-box">Gewinn: <strong id="gewinn">0,00€</strong></div>
+  </div>
+
+  <!-- Bearbeiter -->
+  <div class="row">
+    <label>Bearbeiter / Datum:</label>
+    <div class="bearbeiter-box">
+      <select id="bearbeiter">
+        <option>Christoph</option>
+        <option>Klaus</option>
+      </select>
+      <input type="date" id="datum">
+    </div>
+  </div>
+
+  <!-- PDF Button -->
+  <div class="row">
+    <button class="pdf-button" id="pdfButton">PDF erstellen</button>
+  </div>
+</div>
+
+<script>
+// Datum automatisch
+document.getElementById('datum').valueAsDate = new Date();
+
+// Dynamische Options
+const breiteSelect=document.getElementById('dim_breite'); for(let i=0;i<56;i++) breiteSelect.appendChild(new Option(155+i*5,155+i*5));
+const hoeheSelect=document.getElementById('dim_hoehe'); for(let i=0;i<46;i++) hoeheSelect.appendChild(new Option(30+i,30+i));
+const zollSelect=document.getElementById('dim_zoll'); for(let i=0;i<20;i++) zollSelect.appendChild(new Option(13+i,13+i));
+const loadSelect=document.getElementById('load_index'); for(let i=0;i<31;i++){let li=70+i; let kg=335+((i>0)?i*25:0); loadSelect.appendChild(new Option(`${li} (${kg} kg)`,li));}
+
+// Berechnung
+function berechnen(){
+  const qty=parseInt(document.getElementById('qty').value)||0;
+  const dienstleistungen={demontage:1.5,aufziehen:4,wuchten:2,montieren:2.5,entsorgen:4};
+  let serviceSum=0;
+  document.querySelectorAll('.service-box input[type=checkbox]').forEach(cb=>{if(cb.checked) serviceSum+=dienstleistungen[cb.id];});
+
+  const reifen_option=document.getElementById('reifen_option').value;
+  const reifenpreisField=document.getElementById('reifenpreis');
+  let reifengesamt=0;
+  if(reifen_option==='bestellen'){
+    const reifenpreis=parseFloat(reifenpreisField.value)||0;
+    reifengesamt=reifenpreis*qty;
+    reifenpreisField.disabled=false;
+    document.getElementById('dimRow').classList.remove('disabled-row');
+    document.getElementById('indexRow').classList.remove('disabled-row');
+    Array.from(document.getElementById('dimRow').querySelectorAll('select')).forEach(el=>el.disabled=false);
+    Array.from(document.getElementById('indexRow').querySelectorAll('select')).forEach(el=>el.disabled=false);
+  } else {
+    reifenpreisField.value=''; reifenpreisField.disabled=true;
+    document.getElementById('dimRow').classList.add('disabled-row');
+    document.getElementById('indexRow').classList.add('disabled-row');
+    Array.from(document.getElementById('dimRow').querySelectorAll('select')).forEach(el=>el.disabled=true);
+    Array.from(document.getElementById('indexRow').querySelectorAll('select')).forEach(el=>el.disabled=true);
+  }
+
+  const kalkulation=serviceSum*qty+reifengesamt;
+  document.getElementById('result').textContent=kalkulation.toFixed(2)+'€';
+
+  const angebot=parseFloat(document.getElementById('angebotspreis').value)||0;
+
+  // Gewinn = Angebot - Reifenkosten + Dienstleistung
+  const gewinn=(angebot - reifengesamt) + serviceSum*qty;
+  document.getElementById('gewinn').textContent=gewinn.toFixed(2)+'€';
+}
+
+document.querySelectorAll('input,select').forEach(el=>{el.addEventListener('input',berechnen); el.addEventListener('change',berechnen);});
+berechnen();
+
+// PDF
+document.getElementById('pdfButton').addEventListener('click',()=>{
+  const {jsPDF}=window.jspdf; const doc=new jsPDF('p','mm','a4'); let y=20;
+  doc.setFontSize(18); doc.setTextColor(0,70,120); doc.text("Reifenservice Eichlberger",105,y,{align:'center'}); y+=12;
+  doc.setFontSize(12); doc.setTextColor(0,0,0);
+
+  // Kunde & Auto
+  doc.setFillColor(230,230,250); doc.rect(15,y,180,35,'F');
+  doc.text(`Kunde: ${document.getElementById('kunde').value}`,18,y+8);
+  doc.text(`Auto: ${document.getElementById('auto').value}`,18,y+16);
+  doc.text(`Stückzahl: ${document.getElementById('qty').value}`,18,y+24);
+  doc.text(`Felgentyp: ${document.getElementById('felgentyp').value}`,100,y+8);
+  doc.text(`Reifenart: ${document.getElementById('reifen_art').value}`,100,y+16); y+=40;
+
+  // Dienstleistungen
+  doc.setFillColor(200,230,255); doc.rect(15,y,180,25,'F');
+  const services=Array.from(document.querySelectorAll('.service-box input[type=checkbox]')).filter(cb=>cb.checked).map(cb=>cb.parentElement.textContent.trim()).join(', ');
+  doc.text("Dienstleistungen:",18,y+8); doc.text(services,18,y+16); y+=30;
+
+  // Reifen & Dimension
+  doc.setFillColor(255,240,200); doc.rect(15,y,180,35,'F');
+  doc.text(`Reifen: ${document.getElementById('reifen_option').value}`,18,y+8);
+  doc.text(`Preis pro Stk.: ${document.getElementById('reifenpreis').value}€`,18,y+16);
+  doc.text(`Dimension: ${document.getElementById('dim_breite').value}/${document.getElementById('dim_hoehe').value}R${document.getElementById('dim_zoll').value}`,100,y+8);
+  doc.text(`Marke: ${document.getElementById('reifen_marke').value}`,100,y+16);
+  doc.text(`Load Index: ${document.getElementById('load_index').value}`,18,y+24);
+  doc.text(`XL: ${document.getElementById('xl_reinforced').value}`,100,y+24);
+  doc.text(`Speed Index: ${document.getElementById('speed_index').value}`,140,y+24); y+=40;
+
+  // Rechenweg
+  doc.setFillColor(220,255,220); doc.rect(15,y,180,35,'F');
+  const qty=parseInt(document.getElementById('qty').value)||0;
+  const dienstleistungen2={demontage:1.5,aufziehen:4,wuchten:2,montieren:2.5,entsorgen:4};
+  let serviceSum2=0; Array.from(document.querySelectorAll('.service-box input[type=checkbox]')).forEach(cb=>{if(cb.checked) serviceSum2+=dienstleistungen2[cb.id];});
+  const reifenPreis=parseFloat(document.getElementById('reifenpreis').value)||0;
+  const reifen_option=document.getElementById('reifen_option').value;
+  const reifenKosten=(reifen_option==='bestellen')?reifenPreis*qty:0;
+  doc.text(`Dienstleistungen (Kalkulation & Reingewinn): ${serviceSum2}€ x ${qty} = ${(serviceSum2*qty).toFixed(2)}€`,18,y+16);
+  if(reifen_option==='bestellen') doc.text(`Reifenkosten (Material): ${reifenPreis}€ x ${qty} = ${(reifenPreis*qty).toFixed(2)}€`,18,y+24);
+  doc.text(`Kalkulationspreis gesamt: ${(serviceSum2*qty+reifenKosten).toFixed(2)}€`,18,y+32);
+  let angebot=parseFloat(document.getElementById('angebotspreis').value)||0;
+  let gewinn=(angebot - reifenKosten)+serviceSum2*qty;
+  doc.text(`Gewinn gesamt: ${gewinn.toFixed(2)}€`,18,y+40); y+=45;
+
+  // Bearbeiter
+  doc.setFillColor(240,240,240); doc.rect(15,y,180,15,'F');
+  doc.text(`Bearbeiter: ${document.getElementById('bearbeiter').value}`,18,y+10);
+  doc.text(`Datum: ${document.getElementById('datum').value}`,100,y+10);
+
+  doc.save("Reifenservice-Angebot.pdf");
+});
+</script>
+</body>
+</html>
